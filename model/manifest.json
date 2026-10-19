@@ -1,0 +1,14 @@
+{
+  "dataset": "perfumes.csv",
+  "documents": 26248,
+  "terms": 8000,
+  "min_df": 2,
+  "max_features": 8000,
+  "ngram_range": [
+    1,
+    2
+  ],
+  "failedRows": 0,
+  "duplicatesRemoved": 71,
+  "emptyDocuments": 0
+}
