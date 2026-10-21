@@ -1,6 +1,6 @@
 {
-  "dataset": "perfumes.csv",
-  "documents": 26248,
+  "dataset": "perfumes_master.csv",
+  "documents": 85481,
   "terms": 8000,
   "min_df": 2,
   "max_features": 8000,
@@ -9,6 +9,6 @@
     2
   ],
   "failedRows": 0,
-  "duplicatesRemoved": 71,
+  "duplicatesRemoved": 0,
   "emptyDocuments": 0
 }

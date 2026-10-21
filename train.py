@@ -4,7 +4,8 @@ Perfume Advisor - train.py
 Entrenamiento MANUAL del modelo de recomendacion basado en contenido.
 
 Este script:
-  1. Lee data/perfumes.csv (dataset local de Hugging Face, delimiter '|')
+  1. Lee data/master/perfumes_master.csv si existe (catalogo combinado de
+     3 fuentes, ver combine_datasets.py); si no, data/perfumes.csv
   2. Valida y deduplica por brand + name
   3. Genera un perfumeId estable: slug(brand)--slug(name)
   4. Construye un documento de texto por perfume
@@ -33,7 +34,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from synonyms import expand
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_PATH = BASE_DIR / "data" / "perfumes.csv"
+MASTER_PATH = BASE_DIR / "data" / "master" / "perfumes_master.csv"
+# El catalogo maestro (combine_datasets.py) tiene prioridad; si aun no
+# existe se entrena con el dataset base original.
+DATA_PATH = MASTER_PATH if MASTER_PATH.exists() else BASE_DIR / "data" / "perfumes.csv"
 MODEL_DIR = BASE_DIR / "model"
 
 DELIMITER = "|"

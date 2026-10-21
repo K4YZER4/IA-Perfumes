@@ -95,10 +95,10 @@ def main() -> None:
     line("-")
     print("2) DOCUMENTO CONSTRUIDO PARA UN PERFUME")
     line("-")
-    from train import build_document
+    from train import build_document, DATA_PATH
     import pandas as pd
 
-    df = pd.read_csv(BASE_DIR / "data" / "perfumes.csv", delimiter="|", dtype=str, keep_default_na=False)
+    df = pd.read_csv(DATA_PATH, delimiter="|", dtype=str, keep_default_na=False)
     df = df[(df["brand"].str.strip() == m["brand"]) & (df["name_perfume"].str.strip() == m["name"])].iloc[0]
     doc = build_document(df)
     print(f"   perfumeId: {m['perfumeId']}")
