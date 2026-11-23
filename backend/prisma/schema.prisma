@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String          @id @default(cuid())
+  name         String
+  email        String          @unique
+  passwordHash String          @map("password_hash")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  inventory    InventoryItem[]
+
+  @@map("users")
+}
+
+model Perfume {
+  id          String          @id @default(cuid())
+  externalId  String          @unique @map("external_id")
+  brand       String
+  name        String
+  family      String?
+  subfamily   String?
+  gender      String?
+  releaseYear String?         @map("release_year")
+  description String?
+  imageUrl    String?         @map("image_url")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  inventory   InventoryItem[]
+
+  @@index([brand, name])
+  @@map("perfumes")
+}
+
+model InventoryItem {
+  id                  String   @id @default(cuid())
+  userId              String   @map("user_id")
+  perfumeId           String   @map("perfume_id")
+  rating              Int
+  opinion             String
+  personalDescription String?  @map("personal_description") @db.VarChar(500)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  perfume Perfume @relation(fields: [perfumeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, perfumeId])
+  @@index([userId])
+  @@map("inventory_items")
+}

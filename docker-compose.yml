@@ -1,0 +1,93 @@
+services:
+  # -------------------------------------------------------------
+  # Base de Datos PostgreSQL
+  # -------------------------------------------------------------
+  bd-perfumes:
+    container_name: bd-perfumes
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-perfume_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-perfume_secret_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-perfumes_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - datos_pg_perfumes:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-perfume_user} -d ${POSTGRES_DB:-perfumes_db}"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks:
+      - red-perfumes
+
+  # -------------------------------------------------------------
+  # Servicio IA (FastAPI + TF-IDF)
+  # -------------------------------------------------------------
+  ai-perfumes:
+    container_name: ai-perfumes
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - red-perfumes
+
+  # -------------------------------------------------------------
+  # Backend API (NestJS + Prisma)
+  # -------------------------------------------------------------
+  backend-perfumes:
+    container_name: backend-perfumes
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./ai-service/model/perfumes.json:/app/prisma/perfumes.json:ro
+    environment:
+      # Si quieres usar la BD local del contenedor usa DATABASE_URL abajo:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-perfume_user}:${POSTGRES_PASSWORD:-perfume_secret_2026}@bd-perfumes:5432/${POSTGRES_DB:-perfumes_db}?schema=public"
+      # Si prefieres seguir usando tu Neon Cloud, descomenta y ponla en .env:
+      # DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:-jwtsecretoparaperfumeadvisor2026}
+      AI_SERVICE_URL: "http://ai-perfumes:8000"
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      bd-perfumes:
+        condition: service_healthy
+      ai-perfumes:
+        condition: service_started
+    networks:
+      - red-perfumes
+
+  # -------------------------------------------------------------
+  # Frontend Web (React + Nginx)
+  # -------------------------------------------------------------
+  frontend-perfumes:
+    container_name: frontend-perfumes
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:3000"
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend-perfumes
+    networks:
+      - red-perfumes
+
+volumes:
+  datos_pg_perfumes:
+    name: datos_pg_perfumes
+
+networks:
+  red-perfumes:
+    name: red-perfumes
+    driver: bridge
