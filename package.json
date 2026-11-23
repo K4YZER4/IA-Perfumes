@@ -1,0 +1,16 @@
+{
+  "name": "perfume-advisor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Perfume Advisor - demo escolar (React + NestJS + Prisma + servicio Python)",
+  "scripts": {
+    "dev": "concurrently -k -n IA,API,WEB -c magenta,cyan,green \"npm run dev:ai\" \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:ai": "cd ai-service && python -m uvicorn predict:app --port 8000",
+    "dev:api": "cd backend && npm run start:dev",
+    "dev:web": "cd frontend && npm run dev",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

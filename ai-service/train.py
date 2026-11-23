@@ -27,7 +27,6 @@ import unicodedata
 from pathlib import Path
 
 import joblib
-import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -78,22 +77,32 @@ def parse_ingredients(raw: str) -> str:
 def build_document(row: pd.Series) -> str:
     """ Construye el documento TF-IDF de un perfume.
 
-    Orden: marca, familia, subfamilia, acordes (fragrances), notas
-    (ingredients), descripcion, genero. Todo en minusculas.
+    Enfocado en el perfil olfativo real:
+    - Notas (ingredients) y acordes (fragrances) se repiten para darles mayor peso.
+    - Familia y subfamilia aportan estructura olfativa.
+    - Se excluye la marca del documento para que no contamine las notas (ej. Princesse Marina de Bourbon).
     """
-    fields = [
-        str(row.get("brand", "")),
-        str(row.get("family", "")),
-        str(row.get("subfamily", "")),
-        str(row.get("fragrances", "")),
-        parse_ingredients(row.get("ingredients", "")),
-        str(row.get("description", "")),
-        str(row.get("gender", "")),
+    ingredients = parse_ingredients(row.get("ingredients", ""))
+    fragrances = str(row.get("fragrances", ""))
+    family = str(row.get("family", ""))
+    subfamily = str(row.get("subfamily", ""))
+    description = str(row.get("description", ""))
+
+    # Damos 3x de peso a las notas e ingredientes reales y 2x a los acordes/familias
+    olfactory_profile = [
+        ingredients,
+        ingredients,
+        ingredients,
+        fragrances,
+        fragrances,
+        family,
+        family,
+        subfamily,
+        description,
     ]
-    text = " ".join(fields)
+    text = " ".join(p for p in olfactory_profile if p)
     text = text.lower()
     text = re.sub(r"\s+", " ", text).strip()
-    # Se expanden los sinonimos tambien en el indice (decision del plan)
     return expand(text)
 
 

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Entornos y editores
+.env
+.vscode/
+.idea/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Datasets crudos: se regeneran con `python combine_datasets.py`
+# (ver data/raw/README.md). El catalogo maestro y el modelo SÍ se suben.
+data/raw/*
+!data/raw/README.md

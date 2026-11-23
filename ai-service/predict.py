@@ -66,6 +66,8 @@ class PredictRequest(BaseModel):
     consulta: str = Field(..., min_length=1, description="Peticion en lenguaje natural")
     preferencias: list[Preferencia] = Field(default_factory=list)
     topK: int = Field(default=10, ge=1, le=50)
+    genero: Literal["Todos", "Hombre", "Mujer", "Unisex"] | None = None
+    excluirColeccion: bool = Field(default=True, description="Excluir perfumes ya calificados por el usuario")
 
 
 class Resultado(BaseModel):
@@ -124,7 +126,7 @@ load_artifacts()
 # ----------------------------------------------------------------------
 def vectorize_text(text: str) -> np.ndarray:
     """Texto -> vector TF-IDF (1 x terminos) normalizado L2."""
-    expanded = expand(text)
+    expanded = expand(text, is_query=True)
     vec = app.state.vectorizer.transform([expanded])
     return normalize(vec, norm="l2", axis=1).toarray()[0]
 
@@ -214,16 +216,35 @@ def predict(req: PredictRequest) -> PredictResponse:
     # 4. baseScore = 0.60 * query + 0.40 * perfil
     base_scores = QUERY_WEIGHT * query_scores + PROFILE_WEIGHT * profile_scores
 
-    # 5. Exclusion directa de HATE
+    # 5. Exclusion de HATE, perfumes en coleccion (si aplica) y filtro de genero
+    exclude_idxs = set()
     hate_idxs = {
         app.state.id_to_idx[p.perfumeId]
         for p in req.preferencias
         if p.opinion == "HATE" and p.perfumeId in app.state.id_to_idx
     }
+    exclude_idxs.update(hate_idxs)
+
+    if req.excluirColeccion:
+        for p in req.preferencias:
+            if p.perfumeId in app.state.id_to_idx:
+                exclude_idxs.add(app.state.id_to_idx[p.perfumeId])
+
     excluded = len(hate_idxs)
     mask = np.ones(n, dtype=bool)
-    for idx in hate_idxs:
+    for idx in exclude_idxs:
         mask[idx] = False
+
+    if req.genero and req.genero != "Todos":
+        target_genders = {
+            "Hombre": {"Male", "Unisex"},
+            "Mujer": {"Female", "Unisex"},
+            "Unisex": {"Unisex"},
+        }.get(req.genero)
+
+        if target_genders:
+            gender_mask = np.array([m.get("gender") in target_genders for m in app.state.metadata], dtype=bool)
+            mask &= gender_mask
 
     # 6. Penalizacion multiplicativa por DISLIKE
     dm = dislike_match_vector(req.preferencias)
