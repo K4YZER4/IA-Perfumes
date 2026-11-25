@@ -20,6 +20,6 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*", "scripts/**/*"],
+  "include": ["src/**/*", "scripts/**/*", "prisma/**/*"],
   "exclude": ["node_modules", "dist"]
 }
