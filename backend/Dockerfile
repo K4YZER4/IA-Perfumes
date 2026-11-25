@@ -33,8 +33,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY package*.json tsconfig.json ./
 COPY entrypoint.sh ./
 
-RUN chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh && sed -i 's/\r$//' entrypoint.sh
 
 EXPOSE 3000
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
